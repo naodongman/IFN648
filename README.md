@@ -1,149 +1,81 @@
-Lightweight Cipher Benchmark (Ascon, PRESENT, Simon, Speck, AES-256)
+Lightweight Cipher Benchmark
+Ascon · PRESENT · Simon · Speck · AES-256
 
-This project benchmarks and compares five symmetric encryption algorithms across different platforms:
+This project benchmarks five symmetric encryption algorithms across two hardware platforms—
+a Windows 11 desktop (Intel i7) and a Raspberry Pi 3 Model A+—to evaluate:
 
-Ascon AEAD
+Encryption speed
+
+Memory usage
+
+Code size (.text segment)
+
+Lightweight suitability for IoT devices
+
+Algorithms included:
+
+Ascon AEAD (NIST LWC winner)
 
 PRESENT
 
 Simon
 
 Speck
-
-AES-256 (ECB mode, Tiny-AES-C)
-
-The goal is to evaluate how these algorithms perform under constrained IoT hardware (Raspberry Pi 3 Model A+) and a desktop-class machine (Windows 11 + Intel i7), focusing on:
-
-Speed (encryption latency)
-
-Memory usage (runtime RSS / working set)
-
-Code size (compiled segment).text
-
-And to interpret these results in light of known security analyses from existing literature.
-
-1. Project Overview
-
-This repository integrates multiple open-source implementations of lightweight ciphers into a unified benchmarking framework:
-
-All algorithms are wrapped behind a common C/C++ interface.
-
-The same driver () calls each algorithm in a loop with identical inputs.main.cpp
-
-Timing, memory usage, and code size are measured and compared on:
-
-A Windows 11 desktop (Visual Studio, MSVC).
-
-A Raspberry Pi 3 Model A+ (GCC on Raspbian).
-
-This allows an apples-to-apples comparison of the algorithms in terms of performance and resource consumption.
-
-2. Algorithms Included
-
-The project currently benchmarks the following algorithms:
-
-Ascon AEAD
-NIST lightweight cryptography finalist providing authenticated encryption (AEAD).
-
-PRESENT
-Ultra-lightweight block cipher designed for highly constrained devices.
-
-Simon
-NSA-designed lightweight block cipher (Feistel structure).
-
-Speck
-NSA-designed ARX (Add-Rotate-Xor) lightweight block cipher.
 
 AES-256 (ECB, Tiny-AES-C)
-Standard AES implementation used here as a non-lightweight baseline for comparison.
 
-Each algorithm is used in a 128-bit security configuration where applicable (e.g., Ascon-128, Simon/Speck 128/64, AES-256).
-
-3. Repository Structure
-
-A typical folder layout looks like this:
-
+📁 Project Structure
 CryptoBenchmark/
-├─ ascon-c/                     # Ascon AEAD implementation
+├─ ascon-c/
 │   └─ crypto_aead/...
-├─ present-master/              # PRESENT cipher implementation
+├─ present-master/
 │   ├─ include/
 │   └─ src/
-├─ Simon_Speck_Ciphers-master/  # Simon & Speck implementations
+├─ Simon_Speck_Ciphers-master/
 │   └─ C/
-├─ tiny-AES-c-master/           # Tiny-AES-C (AES-256 ECB)
-│   └─ aes.c, aes.h, ...
-├─ main.cpp                     # Cross-platform benchmark driver
-├─ wrapper.c                    # C wrappers (used on Raspberry Pi)
-└─ (optional) .map / build files
+├─ tiny-AES-c-master/
+│   └─ aes.c, aes.h
+├─ wrapper.c
+├─ main.cpp
+└─ README.md
 
 
-Note: Folder names may differ slightly depending on how you extracted the archives.
-Just make sure the include paths in your build system match this structure.
+All algorithms are extracted from the original GitHub repositories and placed into a unified structure for compilation and benchmarking.
 
-4. Prerequisites
-4.1 Desktop (Windows 11)
+🔧 Build Instructions
+1. Windows 11 (Visual Studio 2022)
 
-Visual Studio 2022 (or later)
+Create a C++ Console Application.
 
-MSVC compiler (installed with Desktop development with C++ workload)
+Add the .c/.h files from:
 
-4.2 Raspberry Pi 3 Model A+
+ascon-c/.../crypto_aead
 
-Raspbian / Raspberry Pi OS (e.g., Bullseye)
-
-GCC / G++ toolchain (e.g., , gcc 10.2g++ 10.2)
-
-Basic build tools:
-
-sudo apt update
-sudo apt install build-essential
-
-5. Building & Running
-5.1 Build on Windows (Visual Studio)
-
-Create a new C++ Console Application (e.g., ).CryptoBenchmark
-
-Add the source files to the project:
-
-main.cpp
-
-Ascon source: relevant and files from .c.hascon-c/crypto_aead/...
-
-PRESENT: , and any required headers from present.cpresent.hpresent-master/include / src
-
-Simon/Speck: , , , from simon.cspeck.csimon.hspeck.hSimon_Speck_Ciphers-master/C
-
-AES: , from aes.caes.htiny-AES-c-master
-
-Set include directories (Project → Properties → C/C++ → Additional Include Directories), e.g.:
-
-ascon-c/crypto_aead/asconaead128/opt64
-
-present-master/include
+present-master/src & present-master/include
 
 Simon_Speck_Ciphers-master/C
 
 tiny-AES-c-master
 
-Set configuration to Release and optimization:
+Add include paths in project settings.
 
-Configuration: Release x64
+Set configuration:
 
-C/C++ → Optimization → /O2
-
-Build and run the project.
-The console will print timing and memory statistics for each algorithm.
-
-5.2 Build on Raspberry Pi
-
-Copy the repository to your Raspberry Pi, e.g.:
-
-git clone https://github.com/<your-username>/<your-repo>.git
-cd <your-repo>
+Release x64
+Optimization: /O2
 
 
-Compile the C sources into object files:
+Build & Run.
+
+2. Raspberry Pi 3 Model A+
+
+Install build tools:
+
+sudo apt update
+sudo apt install build-essential
+
+
+Compile all cipher sources:
 
 gcc -std=c11 -O2 -c \
   ascon-c/crypto_aead/asconaead128/opt64/aead.c \
@@ -152,136 +84,90 @@ gcc -std=c11 -O2 -c \
   Simon_Speck_Ciphers-master/C/simon.c \
   Simon_Speck_Ciphers-master/C/speck.c \
   tiny-AES-c-master/aes.c \
-  wrapper.c \
-  -I./ascon-c/crypto_aead/asconaead128/opt64 \
-  -I./ascon-c/tests \
-  -I./present-master/include \
-  -I./present-master/src \
-  -I./present-master/conf \
-  -I./Simon_Speck_Ciphers-master/C \
-  -I./tiny-AES-c-master
+  wrapper.c
 
 
-Compile and link the C++ benchmark driver:
+Link benchmark driver:
 
 g++ -std=c++17 -O2 \
-  main.cpp \
-  aead.o permutations.o present.o simon.o speck.o aes.o wrapper.o \
+  main.cpp aead.o permutations.o present.o simon.o speck.o aes.o wrapper.o \
   -o CryptoBenchmark
 
 
-Run the benchmark:
+Run:
 
 ./CryptoBenchmark
 
+⚙ Benchmark Methodology
+Test Input
 
-You should see output lines similar to:
+Plaintext: 16 bytes of zeros (uint8_t pt[16] = {0})
 
-Ascon  code:  9760 B, total:  55105 ns, avg:   551 ns, mem: 2404 KB
-PRESENT code: 6384 B, total: 715782 ns, avg:  7157 ns, mem: 2704 KB
-Simon  code: 6016 B, total: 257186 ns, avg:  2571 ns, mem: 2704 KB
-Speck  code: 4784 B, total: 126877 ns, avg:  1268 ns, mem: 2704 KB
-AES256 code:11696 B, total: 337395 ns, avg:  3373 ns, mem: 2704 KB
+Key: Zero-initialized key of appropriate length
 
-6. Benchmark Methodology
+Unified wrappers:
+Each algorithm uses a wrapper function:
 
-The benchmark is intentionally simple and reproducible:
+void wrap_xxx(const uint8_t* pt, uint8_t* ct, const uint8_t* key);
 
-Plaintext:
-A fixed 16-byte all-zero block:
+Speed Measurement
 
-uint8_t pt[16] = {0};
+Timer: std::chrono::high_resolution_clock
 
+Each algorithm runs RUNS times:
 
-Key:
-A fixed all-zero key of appropriate size (e.g., 128 or 256 bits) for each algorithm.
-
-Unified Wrapper Functions:
-Each algorithm is wrapped in a function of the form:
-
-void wrap_ascon(const uint8_t* pt, uint8_t* ct, const uint8_t* key);
-void wrap_present(const uint8_t* pt, uint8_t* ct, const uint8_t* key);
-void wrap_simon(const uint8_t* pt, uint8_t* ct, const uint8_t* key);
-void wrap_speck(const uint8_t* pt, uint8_t* ct, const uint8_t* key);
-void wrap_aes(const uint8_t* pt, uint8_t* ct, const uint8_t* key);
+avg_latency = total_time / RUNS
 
 
-Timing (latency):
-Each algorithm is called in a loop of iterations:RUNS
+Output: nanoseconds (ns)
 
-auto t1 = high_resolution_clock::now();
-algo.fn(pt, ct, key);
-auto t2 = high_resolution_clock::now();
-total_ns += duration_cast<nanoseconds>(t2 - t1).count();
+Memory Usage
 
+Windows: GetProcessMemoryInfo
 
-Average latency is computed as:
+Linux: read /proc/self/status → VmRSS
 
-Average Latency
-=
-Total Time
-RUNS
-(
-in nanoseconds
-)
-Average Latency=
-RUNS
-Total Time
-	​
+Code Size
 
-(in nanoseconds)
+Extracted from linker .map files via the .text segment size of each object file.
 
-Memory Usage:
-After each algorithm run, a helper function getProcessMemoryKB() reads:
+📊 Example Results
+Windows 11 (Intel i7-13700KF)
+Ascon   avg: 1351 ns
+PRESENT avg: 3434 ns
+Simon   avg: 523 ns
+Speck   avg: 360 ns
+AES256  avg: 1304 ns
 
-Windows: GetProcessMemoryInfo → WorkingSetSize
+Raspberry Pi 3 Model A+
+Ascon   avg: 551 ns
+PRESENT avg: 7157 ns
+Simon   avg: 2571 ns
+Speck   avg: 1268 ns
+AES256  avg: 3373 ns
 
-Linux (Pi): /proc/self/status → VmRSS
+🔐 Security Summary (from literature)
 
-This gives an approximate runtime memory footprint (in KB).
+Ascon — No practical attacks on full-round Ascon-128; strong AEAD security.
 
-Code Size:
-Code size is obtained from the linker map file (.map) by extracting the size of the .text segment contributed by each algorithm’s object file.
+PRESENT — Best-known 31-round attack complexity ≈ 2⁶² (not practical).
 
-7. Example Output (Windows)
+Simon — Full-round variants remain secure; only reduced rounds affected.
 
-On a Windows 11 desktop (i7-13700KF), typical results look like:
+Speck — Strong ARX-based resistance; no practical attacks on full rounds.
 
-Ascon  code:  9760 B, total: 135100 ns, avg:  1351 ns, mem: 4140 KB
-PRESENT code: 6384 B, total: 343400 ns, avg:  3434 ns, mem: 4364 KB
-Simon  code: 6016 B, total:  52300 ns, avg:   523 ns, mem: 4372 KB
-Speck  code: 4784 B, total:  36000 ns, avg:   360 ns, mem: 4380 KB
-AES256 code:11696 B, total: 130400 ns, avg:  1304 ns, mem: 4384 KB
+AES-256 — Most mature; no practical attacks on the full 14-round AES-256.
 
+📝 Conclusion
 
-Note: Exact numbers will vary depending on compiler, optimization level, OS, and background load.
-The important part is the relative comparison between algorithms on the same platform.
+Speck is the fastest on the x86-64 desktop platform.
 
-8. Interpretation (High-Level)
+Ascon is the fastest on ARM (Raspberry Pi) and provides strong AEAD security.
 
-Speck tends to be the fastest on x86-64 (Windows desktop) due to its very simple ARX round function.
+PRESENT is extremely lightweight but very slow in software.
 
-Ascon performs extremely well on ARM (Raspberry Pi), often achieving the lowest latency while also providing AEAD (encryption + authentication).
+Simon provides balanced performance with small code size.
 
-PRESENT is typically the slowest in software due to its many rounds and nibble-based S-box design.
+AES-256 has the strongest security and hardware-acceleration potential.
 
-Simon/Speck have very small code size; Speck in particular has the smallest .text footprint.
-
-AES-256 is larger and slower in pure software but remains the most mature and widely standardized choice, and benefits greatly from hardware AES acceleration (not used in these tests).
-
-9. Limitations
-
-Only encryption performance is currently measured (no decryption benchmarks).
-
-No attempt is made to exploit hardware acceleration (e.g., AES-NI, ARM Crypto Extensions).
-
-Security analysis is not re-implemented here; instead, it relies on published cryptographic literature (see your paper/report for details).
-
-10. License
-
-MIT License
-
-Copyright (c) 2025 nate zhao
-
-[full license text]
-在main.cpp中实现如下性能测试
+This unified benchmarking framework enables clear performance comparisons across constrained and unconstrained environments.
